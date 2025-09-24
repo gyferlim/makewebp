@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Check if folder argument is provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <folder_path>"
+    echo "Example: $0 img"
+    echo "Example: $0 /path/to/images"
+    exit 1 
+fi 
+FOLDER="$1"
+
+# Check if folder exists
+if [ ! -d "$FOLDER" ]; then
+    echo "Error: Folder '$FOLDER' does not exist."
+    exit 1 
+fi 
+echo "Converting images in folder: $FOLDER"
+
+# Change to the target directory
+cd "$FOLDER" || {
+    echo "Error: Cannot access folder '$FOLDER'"
+    exit 1
+}
+
+# Convert images with error handling
+converted=0 
+failed=0 
+
+for file in *.{jpg,jpeg,png,tiff,bmp,gif,JPG,JPEG,PNG,TIFF,BMP,GIF}; do
+    if [ -f "$file" ]; then
+        echo "Processing: $file"
+        if cwebp -q 80 "$file" -o "${file}.tmp"; then
+            mv "${file}.tmp" "$file"
+            ((converted++))
+        else
+            echo "✗ Failed to convert: $file"
+            ((failed++))
+        fi
+    fi 
+done
+
+# Summary
+if [ $converted -eq 0 ] && [ $failed -eq 0 ]; then
+    echo "No image files found in folder '$FOLDER'" 
+else
+    echo ""
+    echo "Conversion complete!"
+    echo "Successfully converted: $converted files"
+    [ $failed -gt 0 ] && echo "Failed conversions: $failed files"
+fi
